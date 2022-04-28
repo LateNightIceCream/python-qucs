@@ -1,12 +1,15 @@
+#!/usr/bin/env python3
 import pickle
 import os.path
 import re
 import logging as l
 import csv
 import numpy as np
+import subprocess
+import pathlib
 
-import qucs.extract
-from qucs.extract import load_data
+import python_qucs_lnic.qucs.extract
+from python_qucs_lnic.qucs.extract import load_data
 
 class SimulationDescription(object):
     ''' Contains the description of the simulation
@@ -40,9 +43,10 @@ class SimulationDescription(object):
 class Simulation(object):
     """Main class which contains the status of 1 simulation"""
 
-    def __init__(self, simulation_description):
+    def __init__(self, simulation_description, qucspath = ''):
         """Constructor - inizialize simulation, reads config"""
         self.simulation_description = simulation_description
+        self.qucspath = qucspath
 
     def __repr__(self):
         return self.simulation_description.name
@@ -59,6 +63,7 @@ class Simulation(object):
         if not os.path.isdir(netlists_folder_name):
             os.mkdir(netlists_folder_name)
         filename = os.path.join(netlists_folder_name,'netlist_%s.txt' % self.simulation_description.name)
+        #filename = pathlib.Path(netlists_folder_name, 'netlist_%s.txt' % self.simulation_description.name).resolve()
         f = open(filename, 'w')
         f.write(new_netlist)
         f.close()
@@ -67,20 +72,22 @@ class Simulation(object):
     def run(self):
         """Run simulation"""
         self.modify_netlist()
-        l.info("Checking netlist: " + self.netlist)
+        l.debug("Checking netlist: " + self.netlist)
         import os
+        qucsatorcommand = os.path.join(self.qucspath, 'qucsator')
         try:
-            if os.system('qucsator -c -i ' + self.netlist) != 0:
+            if subprocess.call(qucsatorcommand + ' -c -i ' + self.netlist, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
                 raise BadNetlistFormatException(self.netlist)
         except BadNetlistFormatException as x:
             import sys
-            l.error('File=' + x.netlist_filename) # defined in the exception
+            l.error('Netlist Checker Error. File=' + x.netlist_filename) # defined in the exception
             sys.exit()
-        l.info("Running QUCS on: " + self.netlist)
+        l.debug("Running QUCS on: " + self.netlist)
         self.out = self.netlist.replace('netlist','output')
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
-        os.system('qucsator -i %s -o %s' % (self.netlist,self.out))
+        subprocess.call(qucsatorcommand + ' -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        #os.system('C:\\Users\\rg\\Desktop\\qucs-0.0.19-win32-mingw482-asco-freehdl-adms\\bin\\qucsator.exe -i %s -o %s' % (self.netlist,self.out))
 
     def extract_data(self):
         """Extracts data from qucsdata file into results"""
@@ -92,7 +99,7 @@ class Simulation(object):
         if not os.path.isdir(folder_name):
             os.mkdir(folder_name)
         filename = os.path.join(folder_name,'out_%s.%s' % (self.simulation_description.name, how))
-        l.info('Writing results to %s' % filename)
+        l.debug('Writing results to %s' % filename)
 
         x = self.results.get(output_x)
         y = self.results.get( output_y)

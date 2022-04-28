@@ -1,15 +1,14 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 import re
 import sys
 import array, traceback
 import pylab
+import logging as l
 
 class Data: pass
 class Val(array.ArrayType):
     len=0
     dep=""
-
 
 def load_data(filename):
     state="end"
@@ -25,7 +24,7 @@ def load_data(filename):
                 continue
             if tag[0]=="/":
                 state="end"
-                print("Number of Dimensions:",len(valdep))
+                l.debug("Number of Dimensions:"+str(len(valdep)))
                 if len(valdep)>1:
                     shape=[]
                     for i in range(len(valdep),0,-1):
@@ -50,16 +49,16 @@ def load_data(filename):
         else:
             if state=="start":
                 if "j" in line:
-                    print(line)
+                    l.debug(line)
                     line=line.replace("j","")
                     line="%sj"%line.strip()
                     try:
                         val.append(complex(line))
                     except:
                         traceback.print_exc()
-                        print(line) # add nan check
-                        print(name)
-                        print(len(val))
+                        l.debug(line)
+                        l.debug(name)
+                        l.debug(str(len(val)))
                 else:
                     val.append(float(line))
             else:
