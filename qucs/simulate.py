@@ -46,7 +46,6 @@ class Simulation(object):
     def __init__(self, simulation_description, qucspath = ''):
         """Constructor - inizialize simulation, reads config"""
         self.simulation_description = simulation_description
-        self.qucspath = qucspath
 
     def __repr__(self):
         return self.simulation_description.name
@@ -74,9 +73,8 @@ class Simulation(object):
         self.modify_netlist()
         l.debug("Checking netlist: " + self.netlist)
         import os
-        qucsatorcommand = os.path.join(self.qucspath, 'qucsator')
         try:
-            if subprocess.call(qucsatorcommand + ' -c -i ' + self.netlist, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
+            if subprocess.run('qucsator -c -i ' + self.netlist, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True) != 0:
                 raise BadNetlistFormatException(self.netlist)
         except BadNetlistFormatException as x:
             import sys
@@ -86,7 +84,7 @@ class Simulation(object):
         self.out = self.netlist.replace('netlist','output')
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
-        subprocess.call(qucsatorcommand + ' -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        subprocess.run('qucsator -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True)
         #os.system('C:\\Users\\rg\\Desktop\\qucs-0.0.19-win32-mingw482-asco-freehdl-adms\\bin\\qucsator.exe -i %s -o %s' % (self.netlist,self.out))
 
     def extract_data(self):
