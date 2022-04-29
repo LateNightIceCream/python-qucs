@@ -74,7 +74,7 @@ class Simulation(object):
         l.debug("Checking netlist: " + self.netlist)
         import os
         try:
-            if subprocess.run('qucsator -c -i ' + self.netlist, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True) != 0:
+            if subprocess.call('qucsator -c -i ' + self.netlist, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True) != 0:
                 raise BadNetlistFormatException(self.netlist)
         except BadNetlistFormatException as x:
             import sys
@@ -84,7 +84,7 @@ class Simulation(object):
         self.out = self.netlist.replace('netlist','output')
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
-        subprocess.run('qucsator -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True)
+        subprocess.call('qucsator -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True)
         #os.system('C:\\Users\\rg\\Desktop\\qucs-0.0.19-win32-mingw482-asco-freehdl-adms\\bin\\qucsator.exe -i %s -o %s' % (self.netlist,self.out))
 
     def extract_data(self):
