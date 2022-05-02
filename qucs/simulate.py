@@ -9,7 +9,7 @@ import subprocess
 import pathlib
 
 import python_qucs_lnic.qucs.extract
-from python_qucs_lnic.qucs.extract import load_data
+from python_qucs_lnic.qucs.extract import load_data, parse_data
 
 class SimulationDescription(object):
     ''' Contains the description of the simulation
@@ -85,7 +85,21 @@ class Simulation(object):
         if not os.path.isdir('outputs'):
             os.mkdir('outputs')
         subprocess.call('qucsator -i %s -o %s' % (self.netlist,self.out), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, shell=True)
-        #os.system('C:\\Users\\rg\\Desktop\\qucs-0.0.19-win32-mingw482-asco-freehdl-adms\\bin\\qucsator.exe -i %s -o %s' % (self.netlist,self.out))
+
+    def run_extract(self):
+        self.modify_netlist()
+
+        try:
+            # stdin of qucsator is broken :/
+            # https://github.com/Qucs/qucsator/issues/8
+            output = subprocess.check_output(['qucsator', '-i', self.netlist], text=True, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            l.error(str(e))
+
+        try:
+            self.results = parse_data(output).__dict__
+        except Exception as e:
+            print("parse_data error" + str(e))
 
     def extract_data(self):
         """Extracts data from qucsdata file into results"""
